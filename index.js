@@ -1,5 +1,6 @@
 const builder = require("xmlbuilder");
 const { getCategories, init, close, getProductsByBrand } = require("./db");
+const fs = require("fs");
 
 const getDate = () => {
     const d = new Date();
@@ -38,76 +39,89 @@ const main = async (brandToGet) => {
                     },
                 },
                 categories: {
-                    category: [{
-                        '@id': 1,
-                        '#text': 'Все товары'
-                    }]
+                    category: [
+                        {
+                            "@id": 1,
+                            "#text": "Все товары",
+                        },
+                    ],
                 },
                 offers: {
-                    offer: []
-                }
+                    offer: [],
+                },
             },
             "@date": getDate(),
         },
     };
-    
-    await init()
-    const categories = await getCategories()
-    const products = await getProductsByBrand(brandToGet)
-    close()
-    
+
+    await init();
+    const categories = await getCategories();
+    const products = await getProductsByBrand(brandToGet);
+    close();
+
     categories.forEach((v) => {
-        const category = {}
-    
+        const category = {};
+
         if (!v.parentId) {
-            category['@parentId'] = '1'
+            category["@parentId"] = "1";
         } else {
-            category['@parentId'] = v.parentId
+            category["@parentId"] = v.parentId;
         }
-    
-        category['@id'] = v.id
-        category['#text'] = v.name
-    
-        obj.yml_catalog.shop.categories.category.push(category)
-    })
+
+        category["@id"] = v.id;
+        category["#text"] = v.name;
+
+        obj.yml_catalog.shop.categories.category.push(category);
+    });
 
     for (const v of products) {
-        const offer = {}
+        const offer = {};
 
-        offer.name = v.title
+        offer.name = v.title;
 
-        let priceYuan = v.properties.find((v) => v.key == 'Цена предложения')
-        if (!priceYuan || !priceYuan.value) continue
-        priceYuan = parseInt(priceYuan.value.replace(/\D/g,''))
-        const response = await fetch(`https://poizonapi.ru/calculatePrice/?price=${priceYuan}`)
-        if (!response.ok) continue
-        const json = await response.json()
-        if (!(json && json.body && json.body.price)) continue
-        offer.price = json.body.price
+        let priceYuan = v.properties.find((v) => v.key == "Цена предложения");
+        if (!priceYuan || !priceYuan.value) continue;
+        priceYuan = parseInt(priceYuan.value.replace(/\D/g, ""));
+        const response = await fetch(
+            `https://poizonapi.ru/calculatePrice/?price=${priceYuan}`
+        );
+        if (!response.ok) continue;
+        const json = await response.json();
+        if (!(json && json.body && json.body.price)) continue;
+        offer.price = json.body.price;
 
-        offer.currencyId = 'RUB'
-        offer.picture = v.url
-        offer.url = `https://inpoizonros.com/catalog?productId=${v.productId}`
-        offer.vendor = v.vendor
-        offer.param = []
+        offer.currencyId = "RUB";
+        offer.picture = v.url;
+        offer.url = `https://inpoizonros.com/catalog?productId=${v.productId}`;
+        offer.vendor = v.vendor;
+        offer.param = [];
 
         v.properties.forEach((v) => {
-            if (v.key != 'Цена предложения') offer.param.push({
-                '@name': v.key,
-                '#text': v.value
-            })
-        })
+            if (v.key != "Цена предложения")
+                offer.param.push({
+                    "@name": v.key,
+                    "#text": v.value,
+                });
+        });
 
-        obj.yml_catalog.shop.offers.offer.push(offer)
+        obj.yml_catalog.shop.offers.offer.push(offer);
     }
-    
+
     var root = builder.create(obj).end({
         pretty: true,
         indent: "  ",
         newline: "\n",
         spacebeforeslash: "",
     });
-    console.log(root);    
-}
 
-main('Nike')
+    fs.writeFile("./out.xml", root, (err) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log("success");
+            process.exit(0);
+        }
+    });
+};
+
+main("Nike");

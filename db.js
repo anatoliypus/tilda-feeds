@@ -16,13 +16,13 @@ const init = () =>
 
 const getCategories = async () => {
     const collection = db.collection("Categories");
-    const result = await collection.find().limit(5).toArray();
+    const result = await collection.find().toArray();
     return result;
 };
 
 const getProductsByBrand = async (brand) => {
     const collection = db.collection("Products");
-    const result = await collection.find({vendor: brand}).limit(5).toArray();
+    const result = await collection.find({vendor: brand}).toArray();
     return result;
 };
 
