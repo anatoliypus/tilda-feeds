@@ -116,7 +116,7 @@ const main = async (brandToGet) => {
         spacebeforeslash: "",
     });
 
-    fs.writeFile("./out.xml", root, (err) => {
+    fs.writeFile(`./${brandToGet}.xml`, root, (err) => {
         if (err) {
             console.error(err);
         } else {
