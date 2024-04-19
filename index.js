@@ -95,8 +95,8 @@ const main = async (brandToGet) => {
         offer.url = `https://inpoizonros.com/catalog?productId=${v.productId}`;
         offer.vendor = v.vendor;
         offer.param = [];
-        offer.id = v.productId.toString()
-        offer.available = 'true'
+        offer['@id'] = v.productId.toString()
+        offer['@available'] = 'true'
 
         v.properties.forEach((v) => {
             if (v.key != "Цена предложения")
